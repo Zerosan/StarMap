@@ -39,8 +39,17 @@ function init() {
         for(var i = 0; i < stars.length; i++) {
             var star = stars[i];
 
-            cordOut.append("<li>star #" + i + " x: " + star.x + " y: " + star.y + "</li>");
-            cordOut.children().last().data("index",i);
+            $("<li>star #" + i + " x: " + star.x + " y: " + star.y + "</li>")
+                .addClass("star-cord")
+                .data({
+                    index: i
+                })
+                .on({
+                    click: function() {
+                        removeStar($(this).data("index"));
+                    }
+                })
+                .appendTo("#cordOut");
         }
     }
 
@@ -53,11 +62,10 @@ function init() {
         updateStarCordsOut(stars);
     }
 
-    $(document).on("click", "#cordOut li", function() {
-        var index = $(this).data("index");
+    function removeStar(index) {
         stars.splice(index, 1);
         store.set("stars", stars);
         redrawStars(stage, stars);
-    });
+    }
 }
 
