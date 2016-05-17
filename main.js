@@ -10,17 +10,20 @@ var init = function() {
     }
 
     sm.stage = new createjs.Stage("demoCanvas");
-    sm.stage.update();
+    sm.stage.enableMouseOver(10)
     sm.stars = [];
+    sm.dragTarget = null;
 
     if(store.get("stars")) {
         sm.stars = store.get("stars");
     }
 
-    sm.stage.on("stagemousedown", function(evt) {
-        sm.drawStar(evt.stageX, evt.stageY);
+    sm.stage.on("stagemouseup", function(evt) {
+        if(sm.stage.getObjectUnderPoint(evt.stageX, evt.stageY, 0)) {
+            return;
+        }
         sm.stars.push({x:evt.stageX, y:evt.stageY});
-        store.set("stars", sm.stars);
+        sm.redrawStars();
         sm.updateStarCordsOut();
     });
 
@@ -29,8 +32,32 @@ var init = function() {
         star.graphics.beginFill("LightBlue").drawCircle(0,0,5);
         star.x = x;
         star.y = y;
+        star.name = star.id;
+        star.addEventListener("click", function(event) {
+            console.log(star)
+        });
+        star.addEventListener("mouseover", function(event) {
+            console.log(star.id);
+        });
+        star.addEventListener("pressmove", function(event) {
+            event.target.x = event.stageX;
+            event.target.y = event.stageY;
+            sm.update = true;
+        });
+        star.addEventListener("pressup", function(event) {
+            var id = star.id;
+            for(var i = 0; i < sm.stars.length; i++) {
+                if(stars[i].id == id) {
+                    stars[i].x = event.stageX;
+                    stars[i].y = event.stageY;
+                    break;
+                }
+            }
+            sm.updateStarCordsOut();
+        });
         sm.stage.addChild(star);
-        sm.stage.update();
+        sm.update = true;
+        return star.id;
     };
 
     sm.updateStarCordsOut = function() {
@@ -42,23 +69,28 @@ var init = function() {
             $('<li>star #' + i + " x: " + star.x + " y: " + star.y + '</li>')
                 .addClass("star-cord")
                 .data({
-                    index: i
+                    index: i,
+                    id: star.id
                 })
                 .on({
                     "click": function() {
                         sm.removeStar($(this).data("index"));
+                    },
+                    "mouseover": function() {
+                        sm.update = true;
                     }
                 })
                 .appendTo("#cordOut");
         }
+        store.set("stars", sm.stars);
     };
 
 
     sm.redrawStars = function() {
         sm.stage.removeAllChildren();
-        sm.stage.update();
+        sm.update = true;
         for(var i = 0; i < sm.stars.length; i++) {
-            sm.drawStar(sm.stars[i].x, sm.stars[i].y);
+            sm.stars[i].id = sm.drawStar(sm.stars[i].x, sm.stars[i].y);
         }
         sm.updateStarCordsOut();
     };
@@ -69,7 +101,18 @@ var init = function() {
         sm.redrawStars();
     };
 
+    sm.tickHandler = function() {
+        if(sm.update) {
+            sm.update = false;
+            sm.stage.update();
+        }
+    };
+
+    createjs.Ticker.addEventListener("tick", sm.tickHandler);
+
     sm.redrawStars();
+
+
 };
 
 
