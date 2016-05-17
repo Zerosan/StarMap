@@ -1,71 +1,76 @@
 /**
  * Created by Kai on 2016-05-17.
  */
-document.body.onload = init;
-var stars = [];
-function init() {
+
+var init = function() {
+    var sm = this;
     if (!store.enabled) {
         alert('Local storage is not supported by your browser. Please disable "Private Mode", or upgrade to a modern browser.');
         return;
     }
 
-    var stage = new createjs.Stage("demoCanvas");
-    stage.update();
+    sm.stage = new createjs.Stage("demoCanvas");
+    sm.stage.update();
+    sm.stars = [];
 
     if(store.get("stars")) {
-        stars = store.get("stars");
-        redrawStars(stage, stars);
+        sm.stars = store.get("stars");
     }
 
-    stage.on("stagemousedown", function(evt) {
-        drawStar(stage, evt.stageX, evt.stageY, 5);
-        stars.push({x:evt.stageX, y:evt.stageY});
-        store.set("stars", stars);
-        updateStarCordsOut(stars);
+    sm.stage.on("stagemousedown", function(evt) {
+        sm.drawStar(evt.stageX, evt.stageY);
+        sm.stars.push({x:evt.stageX, y:evt.stageY});
+        store.set("stars", sm.stars);
+        sm.updateStarCordsOut();
     });
 
-    function drawStar(stage, x, y, size) {
+    sm.drawStar = function(x, y) {
         var star = new createjs.Shape();
-        star.graphics.beginFill("LightBlue").drawCircle(0,0,size);
+        star.graphics.beginFill("LightBlue").drawCircle(0,0,5);
         star.x = x;
         star.y = y;
-        stage.addChild(star);
-        stage.update();
-    }
+        sm.stage.addChild(star);
+        sm.stage.update();
+    };
 
-    function updateStarCordsOut(stars) {
+    sm.updateStarCordsOut = function() {
         var cordOut = $("#cordOut");
         cordOut.empty();
-        for(var i = 0; i < stars.length; i++) {
-            var star = stars[i];
+        for(var i = 0; i < sm.stars.length; i++) {
+            var star = sm.stars[i];
 
-            $("<li>star #" + i + " x: " + star.x + " y: " + star.y + "</li>")
+            $('<li>star #' + i + " x: " + star.x + " y: " + star.y + '</li>')
                 .addClass("star-cord")
                 .data({
                     index: i
                 })
                 .on({
-                    click: function() {
-                        removeStar($(this).data("index"));
+                    "click": function() {
+                        sm.removeStar($(this).data("index"));
                     }
                 })
                 .appendTo("#cordOut");
         }
-    }
+    };
 
 
-    function redrawStars(stage, stars) {
-        stage.removeAllChildren();
-        stars.forEach(function(star) {
-            drawStar(stage, star.x, star.y, 5);
-        });
-        updateStarCordsOut(stars);
-    }
+    sm.redrawStars = function() {
+        sm.stage.removeAllChildren();
+        sm.stage.update();
+        for(var i = 0; i < sm.stars.length; i++) {
+            sm.drawStar(sm.stars[i].x, sm.stars[i].y);
+        }
+        sm.updateStarCordsOut();
+    };
 
-    function removeStar(index) {
-        stars.splice(index, 1);
-        store.set("stars", stars);
-        redrawStars(stage, stars);
-    }
-}
+    sm.removeStar = function(index) {
+        sm.stars.splice(index, 1);
+        store.set("stars", sm.stars);
+        sm.redrawStars();
+    };
 
+    sm.redrawStars();
+};
+
+
+document.body.onload = init;
