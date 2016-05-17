@@ -34,10 +34,12 @@ var init = function() {
         star.y = y;
         star.name = star.id;
         star.addEventListener("click", function(event) {
-            console.log(star)
-        });
-        star.addEventListener("mouseover", function(event) {
-            console.log(star.id);
+            for(var i = 0; i < sm.stars.length; i++) {
+                if(stars[i].id==star.id) {
+                    sm.removeStar(i);
+                    break;
+                }
+            }
         });
         star.addEventListener("pressmove", function(event) {
             event.target.x = event.stageX;
