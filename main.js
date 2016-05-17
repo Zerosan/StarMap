@@ -12,6 +12,9 @@ var init = function() {
     sm.stage = new createjs.Stage("demoCanvas");
     sm.stage.enableMouseOver(10)
     sm.stars = [];
+    sm.defaultInitializer = "sol_system_initializer";
+
+    sm.selectedSystem = null;
 
     if(store.get("stars")) {
         sm.stars = store.get("stars");
@@ -21,7 +24,7 @@ var init = function() {
         if(sm.stage.getObjectUnderPoint(evt.stageX, evt.stageY, 0)) {
             return;
         }
-        sm.stars.push({x:evt.stageX, y:evt.stageY});
+        sm.stars.push({x:evt.stageX, y:evt.stageY, initializer: sm.defaultInitializer});
         sm.redrawStars();
         sm.updateStarCordsOut();
     });
@@ -32,14 +35,11 @@ var init = function() {
         star.x = x;
         star.y = y;
         star.name = star.id;
-        star.allow_delete = true;
         star.addEventListener("click", function(event) {
-            if(sm.allow_delete) {
-                for(var i = 0; i < sm.stars.length; i++) {
-                    if(stars[i].id==star.id) {
-                        sm.removeStar(i);
-                        break;
-                    }
+            for(var i = 0; i < sm.stars.length; i++) {
+                if (sm.stars[i].id == star.id) {
+                    sm.selectSystem(i);
+                    break;
                 }
             }
         });
@@ -47,19 +47,17 @@ var init = function() {
             event.target.x = event.stageX;
             event.target.y = event.stageY;
             sm.update = true;
-            sm.allow_delete = false;
         });
         star.addEventListener("pressup", function(event) {
             var id = star.id;
             for(var i = 0; i < sm.stars.length; i++) {
-                if(stars[i].id == id) {
-                    stars[i].x = event.stageX;
-                    stars[i].y = event.stageY;
+                if(sm.stars[i].id == id) {
+                    sm.stars[i].x = event.stageX;
+                    sm.stars[i].y = event.stageY;
                     break;
                 }
             }
             sm.updateStarCordsOut();
-            sm.allow_delete = true;
         });
         sm.stage.addChild(star);
         sm.update = true;
@@ -72,7 +70,7 @@ var init = function() {
         for(var i = 0; i < sm.stars.length; i++) {
             var star = sm.stars[i];
 
-            $('<li>star #' + i + " x: " + star.x + " y: " + star.y + '</li>')
+            $('<li>#' + i + " x: " + star.x + " y: " + star.y + ' i: ' + star.initializer + '</li>')
                 .addClass("star-cord")
                 .data({
                     index: i,
@@ -90,7 +88,6 @@ var init = function() {
         }
         store.set("stars", sm.stars);
     };
-
 
     sm.redrawStars = function() {
         sm.stage.removeAllChildren();
@@ -112,6 +109,22 @@ var init = function() {
             sm.update = false;
             sm.stage.update();
         }
+    };
+
+    sm.selectSystem = function(index) {
+        var box = $("#currentSystem");
+        var star = sm.stars[index];
+        box.find("span").text("#" + star.id);
+        box.find("input").val(sm.stars[index].initializer);
+        sm.selectedSystem = index;
+
+        var object = sm.stage.getChildByName(star.id);
+        sm.selector = new createjs.Shape();
+        sm.selector.graphics.beginStroke("Yellow").drawCircle(0,0,7);
+        sm.selector.x = object.x;
+        sm.selector.y = object.y;
+        sm.stage.addChild(sm.selector);
+        sm.update = true;
     };
 
     createjs.Ticker.addEventListener("tick", sm.tickHandler);
@@ -138,7 +151,7 @@ var init = function() {
         var output = "";
         for(var i = 0; i < sm.stars.length; i++) {
             var star = sm.stars[i];
-            output += "Star" + i + "," + star.x + "," + star.y + "\n";
+            output += "Star" + i + "," + star.x + "," + star.y + ", " + star.initializer +"\n";
         }
         $(".importExportOutput").text(output);
 
@@ -152,6 +165,18 @@ var init = function() {
        sm.stars = [];
         sm.redrawStars();
     });
+
+    $("#initializer").on("input", function() {
+        if(sm.selectedSystem !== null) {
+            sm.stars[sm.selectedSystem].initializer = $(this).val();
+            sm.updateStarCordsOut();
+        }
+    });
+
+    $("#defaultInitializer").on("input", function() {
+       sm.defaultInitializer = $(this).val();
+    });
+
 
 };
 

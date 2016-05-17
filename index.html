@@ -12,11 +12,16 @@
 </head>
 <body>
     <h1>Starmapper</h1>
-    <canvas id="demoCanvas" width="1280" height="720"></canvas>
+    <canvas id="demoCanvas" width="500" height="500"></canvas>
     <div class="cordBar">
         <button class="importExportBtn">Import/Export</button>
         <button class="clear">Clear</button>
         <br />
+        <label for="defaultInitializer">Default Initializer:</label><input id="defaultInitializer" value="sol_system_initializer" />
+        <div id="currentSystem">
+            <span>#</span>
+            <input type="text" id="initializer" />
+        </div>
         <label for="cordOut">Coordinate List:</label><br />
         <ul id="cordOut"></ul>
     </div>
