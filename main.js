@@ -118,8 +118,53 @@ var init = function() {
 
     sm.redrawStars();
 
+    $(".importButton").button().click(function() {
+        var lines = $(".importExportOutput").val().split("\n");
+        sm.stars = [];
+        console.log(sm.stars)
+        for(var i = 0; i < lines.length; i++) {
+            var vars = lines[i].split(",");
+            if(vars[1]>0 && vars[2] > 0) {
+                sm.stars.push({
+                    x:vars[1],
+                    y:vars[2]
+                });
+            }
+        }
+        console.log(sm.stars)
+        sm.redrawStars();
+    });
+    $(".exportButton").button().click(function() {
+        var output = "";
+        for(var i = 0; i < sm.stars.length; i++) {
+            var star = sm.stars[i];
+            output += "Star" + i + "," + star.x + "," + star.y + "\n";
+        }
+        $(".importExportOutput").text(output);
+
+    });
+
+    $(".importExportBtn").button().on("click", function() {
+        $("#importExportDialog").dialog({width:'auto'});;
+    });
+
+    $(".clear").button().on("click", function() {
+       sm.stars = [];
+        sm.redrawStars();
+    });
 
 };
 
+$(".importExportOutput").focus(function() {
+    var $this = $(this);
+    $this.select();
+
+    // Work around Chrome's little problem
+    $this.mouseup(function() {
+        // Prevent further mouseup intervention
+        $this.unbind("mouseup");
+        return false;
+    });
+});
 
 document.body.onload = init;
