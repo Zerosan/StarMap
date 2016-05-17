@@ -12,7 +12,6 @@ var init = function() {
     sm.stage = new createjs.Stage("demoCanvas");
     sm.stage.enableMouseOver(10)
     sm.stars = [];
-    sm.dragTarget = null;
 
     if(store.get("stars")) {
         sm.stars = store.get("stars");
@@ -33,11 +32,14 @@ var init = function() {
         star.x = x;
         star.y = y;
         star.name = star.id;
+        star.allow_delete = true;
         star.addEventListener("click", function(event) {
-            for(var i = 0; i < sm.stars.length; i++) {
-                if(stars[i].id==star.id) {
-                    sm.removeStar(i);
-                    break;
+            if(sm.allow_delete) {
+                for(var i = 0; i < sm.stars.length; i++) {
+                    if(stars[i].id==star.id) {
+                        sm.removeStar(i);
+                        break;
+                    }
                 }
             }
         });
@@ -45,6 +47,7 @@ var init = function() {
             event.target.x = event.stageX;
             event.target.y = event.stageY;
             sm.update = true;
+            sm.allow_delete = false;
         });
         star.addEventListener("pressup", function(event) {
             var id = star.id;
@@ -56,6 +59,7 @@ var init = function() {
                 }
             }
             sm.updateStarCordsOut();
+            sm.allow_delete = true;
         });
         sm.stage.addChild(star);
         sm.update = true;
