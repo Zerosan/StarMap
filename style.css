@@ -1,0 +1,25 @@
+body {
+    background: black;
+    color: white;
+}
+
+#cordOut {
+    height:720px;
+    width:250px;
+}
+
+#cordOut li:hover {
+    background: #333;
+}
+
+.cordBar {
+    position:absolute;
+    top:5px;
+    right:5px;
+    border:1px dashed white;
+}
+
+#demoCanvas {
+    display:block;
+    border:1px dashed white;
+}
