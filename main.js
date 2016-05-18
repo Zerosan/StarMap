@@ -1,7 +1,6 @@
 /**
  * Created by Kai on 2016-05-17.
  */
-
 var init = function() {
     var sm = this;
     if (!store.enabled) {
@@ -11,74 +10,74 @@ var init = function() {
 
     sm.stage = new createjs.Stage("demoCanvas");
     sm.stage.enableMouseOver(10)
-    sm.stars = [];
+    sm.systems = [];
     sm.defaultInitializer = "sol_system_initializer";
 
     sm.selectedSystem = null;
 
-    if(store.get("stars")) {
-        sm.stars = store.get("stars");
+    if(store.get("systems")) {
+        sm.systems = store.get("systems");
     }
 
     sm.stage.on("stagemouseup", function(evt) {
         if(sm.stage.getObjectUnderPoint(evt.stageX, evt.stageY, 0)) {
             return;
         }
-        sm.stars.push({x:evt.stageX, y:evt.stageY, initializer: sm.defaultInitializer});
-        sm.redrawStars();
-        sm.updateStarCordsOut();
+        sm.systems.push({x:evt.stageX, y:evt.stageY, initializer: sm.defaultInitializer});
+        sm.redrawSystems();
+        sm.updateSystemCordsOut();
     });
 
-    sm.drawStar = function(x, y) {
-        var star = new createjs.Shape();
-        star.graphics.beginFill("LightBlue").drawCircle(0,0,5);
-        star.x = x;
-        star.y = y;
-        star.name = star.id;
-        star.addEventListener("click", function(event) {
-            for(var i = 0; i < sm.stars.length; i++) {
-                if (sm.stars[i].id == star.id) {
+    sm.drawSystem = function(x, y) {
+        var system = new createjs.Shape();
+        system.graphics.beginFill("LightBlue").drawCircle(0,0,5);
+        system.x = x;
+        system.y = y;
+        system.name = system.id;
+        system.addEventListener("click", function(event) {
+            for(var i = 0; i < sm.systems.length; i++) {
+                if (sm.systems[i].id == system.id) {
                     sm.selectSystem(i);
                     break;
                 }
             }
         });
-        star.addEventListener("pressmove", function(event) {
+        system.addEventListener("pressmove", function(event) {
             event.target.x = event.stageX;
             event.target.y = event.stageY;
             sm.update = true;
         });
-        star.addEventListener("pressup", function(event) {
-            var id = star.id;
-            for(var i = 0; i < sm.stars.length; i++) {
-                if(sm.stars[i].id == id) {
-                    sm.stars[i].x = event.stageX;
-                    sm.stars[i].y = event.stageY;
+        system.addEventListener("pressup", function(event) {
+            var id = system.id;
+            for(var i = 0; i < sm.systems.length; i++) {
+                if(sm.systems[i].id == id) {
+                    sm.systems[i].x = event.stageX;
+                    sm.systems[i].y = event.stageY;
                     break;
                 }
             }
-            sm.updateStarCordsOut();
+            sm.updateSystemCordsOut();
         });
-        sm.stage.addChild(star);
+        sm.stage.addChild(system);
         sm.update = true;
-        return star.id;
+        return system.id;
     };
 
-    sm.updateStarCordsOut = function() {
+    sm.updateSystemCordsOut = function() {
         var cordOut = $("#cordOut");
         cordOut.empty();
-        for(var i = 0; i < sm.stars.length; i++) {
-            var star = sm.stars[i];
+        for(var i = 0; i < sm.systems.length; i++) {
+            var system = sm.systems[i];
 
-            $('<li>#' + i + " x: " + star.x + " y: " + star.y + ' i: ' + star.initializer + '</li>')
-                .addClass("star-cord")
+            $('<li>#' + i + " x: " + system.x + " y: " + system.y + ' i: ' + system.initializer + '</li>')
+                .addClass("system-cord")
                 .data({
                     index: i,
-                    id: star.id
+                    id: system.id
                 })
                 .on({
                     "click": function() {
-                        sm.removeStar($(this).data("index"));
+                        sm.removeSystem($(this).data("index"));
                     },
                     "mouseover": function() {
                         sm.update = true;
@@ -86,22 +85,22 @@ var init = function() {
                 })
                 .appendTo("#cordOut");
         }
-        store.set("stars", sm.stars);
+        store.set("systems", sm.systems);
     };
 
-    sm.redrawStars = function() {
+    sm.redrawSystems = function() {
         sm.stage.removeAllChildren();
         sm.update = true;
-        for(var i = 0; i < sm.stars.length; i++) {
-            sm.stars[i].id = sm.drawStar(sm.stars[i].x, sm.stars[i].y);
+        for(var i = 0; i < sm.systems.length; i++) {
+            sm.systems[i].id = sm.drawSystem(sm.systems[i].x, sm.systems[i].y);
         }
-        sm.updateStarCordsOut();
+        sm.updateSystemCordsOut();
     };
 
-    sm.removeStar = function(index) {
-        sm.stars.splice(index, 1);
-        store.set("stars", sm.stars);
-        sm.redrawStars();
+    sm.removeSystem = function(index) {
+        sm.systems.splice(index, 1);
+        store.set("systems", sm.systems);
+        sm.redrawSystems();
     };
 
     sm.tickHandler = function() {
@@ -113,12 +112,12 @@ var init = function() {
 
     sm.selectSystem = function(index) {
         var box = $("#currentSystem");
-        var star = sm.stars[index];
-        box.find("span").text("#" + star.id);
-        box.find("input").val(sm.stars[index].initializer);
+        var system = sm.systems[index];
+        box.find("span").text("#" + system.id);
+        box.find("input").val(sm.systems[index].initializer);
         sm.selectedSystem = index;
 
-        var object = sm.stage.getChildByName(star.id);
+        var object = sm.stage.getChildByName(system.id);
         sm.selector = new createjs.Shape();
         sm.selector.graphics.beginStroke("Yellow").drawCircle(0,0,7);
         sm.selector.x = object.x;
@@ -129,29 +128,29 @@ var init = function() {
 
     createjs.Ticker.addEventListener("tick", sm.tickHandler);
 
-    sm.redrawStars();
+    sm.redrawSystems();
 
     $(".importButton").button().click(function() {
         var lines = $(".importExportOutput").val().split("\n");
-        sm.stars = [];
-        console.log(sm.stars)
+        sm.systems = [];
+        console.log(sm.systems)
         for(var i = 0; i < lines.length; i++) {
             var vars = lines[i].split(",");
             if(vars[1]>0 && vars[2] > 0) {
-                sm.stars.push({
+                sm.systems.push({
                     x:vars[1],
                     y:vars[2]
                 });
             }
         }
-        console.log(sm.stars)
-        sm.redrawStars();
+        console.log(sm.systems)
+        sm.redrawSystems();
     });
     $(".exportButton").button().click(function() {
         var output = "";
-        for(var i = 0; i < sm.stars.length; i++) {
-            var star = sm.stars[i];
-            output += "Star" + i + "," + star.x + "," + star.y + ", " + star.initializer +"\n";
+        for(var i = 0; i < sm.systems.length; i++) {
+            var system = sm.systems[i];
+            output += "System" + i + "," + system.x + "," + system.y + ", " + system.initializer +"\n";
         }
         $(".importExportOutput").text(output);
 
@@ -162,14 +161,14 @@ var init = function() {
     });
 
     $(".clear").button().on("click", function() {
-       sm.stars = [];
-        sm.redrawStars();
+       sm.systems = [];
+        sm.redrawSystems();
     });
 
     $("#initializer").on("input", function() {
         if(sm.selectedSystem !== null) {
-            sm.stars[sm.selectedSystem].initializer = $(this).val();
-            sm.updateStarCordsOut();
+            sm.systems[sm.selectedSystem].initializer = $(this).val();
+            sm.updateSystemCordsOut();
         }
     });
 
