@@ -1,0 +1,24 @@
+{
+  "name": "starmap",
+  "description": "",
+  "main": "main.js",
+  "authors": [
+    "Zerosan (venarius@gmail.com)"
+  ],
+  "license": "ISC",
+  "homepage": "https://github.com/Zerosan/StarMap",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "EaselJS": "easeljs#^0.8.2",
+    "jquery": "^2.2.3",
+    "jquery-ui": "^1.11.4",
+    "knockout": "knockoutjs#^3.4.0",
+    "store-js": "^1.3.20"
+  }
+}

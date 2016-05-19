@@ -1,194 +1,124 @@
 /**
  * Created by Kai on 2016-05-17.
  */
-var init = function() {
-    var sm = this;
+function System(x, y, initializer) {
+    var self = this;
+    self.id = ko.observable(null);
+    self.x = ko.observable(x);
+    self.y = ko.observable(y);
+    self.selected = ko.observable(false);
+    self.highlight = ko.observable(false);
+    self.initializer = ko.observable(initializer);
+
+    self.status = ko.computed(function() {
+        if(self.selected()) return "selected";
+        if(self.highlight()) return "highlight";
+        return null;
+    });
+}
+
+function SystemMapperModel() {
+    var self = this;
     if (!store.enabled) {
         alert('Local storage is not supported by your browser. Please disable "Private Mode", or upgrade to a modern browser.');
         return;
     }
 
-    sm.stage = new createjs.Stage("demoCanvas");
-    sm.stage.enableMouseOver(10)
-    sm.systems = [];
-    sm.defaultInitializer = "sol_system_initializer";
+    self.stage = new createjs.Stage("demoCanvas");
+    self.stage.enableMouseOver(10);
+    self.systems = ko.observableArray();
+    self.defaultInitializer = ko.observable("sol_system_initializer");
 
-    sm.selectedSystem = null;
-
-    if(store.get("systems")) {
-        sm.systems = store.get("systems");
-    }
-
-    sm.stage.on("stagemouseup", function(evt) {
-        if(sm.stage.getObjectUnderPoint(evt.stageX, evt.stageY, 0)) {
+    self.stage.on("stagemouseup", function(evt) {
+        var x = Math.round(evt.stageX);
+        var y = Math.round(evt.stageY);
+        if(self.stage.getObjectUnderPoint(x, y, 0)) {
             return;
         }
-        sm.systems.push({x:evt.stageX, y:evt.stageY, initializer: sm.defaultInitializer});
-        sm.redrawSystems();
-        sm.updateSystemCordsOut();
+        self.systems.push(new System(x, y, self.defaultInitializer()));
     });
 
-    sm.drawSystem = function(x, y) {
+    self.drawSystem = function(x, y) {
         var system = new createjs.Shape();
         system.graphics.beginFill("LightBlue").drawCircle(0,0,5);
         system.x = x;
         system.y = y;
+        system.on("mouseover", function(event) {
+            self.systems().forEach(function(s) {
+               if(s.id() == system.id) {
+                   s.highlight(true);
+               }
+            });
+        });
+        system.on("mouseout", function(event) {
+            self.systems().forEach(function(s) {
+                if(s.id() == system.id) {
+                    s.highlight(false);
+                }
+            });
+        });
+        system.on("click", function(event) {
+            self.systems().forEach(function(s) {
+                if(s.id() == system.id) {
+                    s.selected(true);
+                }else{
+                    s.selected(false);
+                }
+            });
+        });
         system.name = system.id;
-        system.addEventListener("click", function(event) {
-            for(var i = 0; i < sm.systems.length; i++) {
-                if (sm.systems[i].id == system.id) {
-                    sm.selectSystem(i);
-                    break;
-                }
-            }
-        });
-        system.addEventListener("pressmove", function(event) {
-            event.target.x = event.stageX;
-            event.target.y = event.stageY;
-            sm.update = true;
-        });
-        system.addEventListener("pressup", function(event) {
-            var id = system.id;
-            for(var i = 0; i < sm.systems.length; i++) {
-                if(sm.systems[i].id == id) {
-                    sm.systems[i].x = event.stageX;
-                    sm.systems[i].y = event.stageY;
-                    break;
-                }
-            }
-            sm.updateSystemCordsOut();
-        });
-        sm.stage.addChild(system);
-        sm.update = true;
+        self.stage.addChild(system);
+        self.update = true;
         return system.id;
     };
 
-    sm.updateSystemCordsOut = function() {
-        var cordOut = $("#cordOut");
-        cordOut.empty();
-        for(var i = 0; i < sm.systems.length; i++) {
-            var system = sm.systems[i];
 
-            $('<li>#' + i + " x: " + system.x + " y: " + system.y + ' i: ' + system.initializer + '</li>')
-                .addClass("system-cord")
-                .data({
-                    index: i,
-                    id: system.id
-                })
-                .on({
-                    "click": function() {
-                        sm.removeSystem($(this).data("index"));
-                    },
-                    "mouseover": function() {
-                        sm.update = true;
-                    }
-                })
-                .appendTo("#cordOut");
-        }
-        store.set("systems", sm.systems);
+    self.removeSystem = function(system) {
+        self.systems.remove(system);
     };
 
-    sm.redrawSystems = function() {
-        sm.stage.removeAllChildren();
-        sm.update = true;
-        for(var i = 0; i < sm.systems.length; i++) {
-            sm.systems[i].id = sm.drawSystem(sm.systems[i].x, sm.systems[i].y);
-        }
-        sm.updateSystemCordsOut();
-    };
+    self.systems.subscribe(function(changes) {
+        changes.forEach(function(change) {
+           if(change.status === 'added') {
+               change.value.id(self.drawSystem(change.value.x(), change.value.y()));
+           }else
+            if(change.status === "deleted") {
+                var stageObject = self.stage.getChildByName(change.value.id());
+                self.stage.removeChild(stageObject);
+                self.update = true;
+            }else
+            console.log(change.status);
 
-    sm.removeSystem = function(index) {
-        sm.systems.splice(index, 1);
-        store.set("systems", sm.systems);
-        sm.redrawSystems();
-    };
+        })
+    }, null, "arrayChange");
 
-    sm.tickHandler = function() {
-        if(sm.update) {
-            sm.update = false;
-            sm.stage.update();
+    self.tickHandler = function() {
+        if(self.update) {
+            self.update = false;
+            self.stage.update();
         }
     };
-
-    sm.selectSystem = function(index) {
-        var box = $("#currentSystem");
-        var system = sm.systems[index];
-        box.find("span").text("#" + system.id);
-        box.find("input").val(sm.systems[index].initializer);
-        sm.selectedSystem = index;
-
-        var object = sm.stage.getChildByName(system.id);
-        sm.selector = new createjs.Shape();
-        sm.selector.graphics.beginStroke("Yellow").drawCircle(0,0,7);
-        sm.selector.x = object.x;
-        sm.selector.y = object.y;
-        sm.stage.addChild(sm.selector);
-        sm.update = true;
-    };
-
-    createjs.Ticker.addEventListener("tick", sm.tickHandler);
-
-    sm.redrawSystems();
+    createjs.Ticker.on("tick", self.tickHandler);
 
     $(".importButton").button().click(function() {
-        var lines = $(".importExportOutput").val().split("\n");
-        sm.systems = [];
-        console.log(sm.systems)
-        for(var i = 0; i < lines.length; i++) {
-            var vars = lines[i].split(",");
-            if(vars[1]>0 && vars[2] > 0) {
-                sm.systems.push({
-                    x:vars[1],
-                    y:vars[2]
-                });
-            }
-        }
-        console.log(sm.systems)
-        sm.redrawSystems();
+
     });
+
     $(".exportButton").button().click(function() {
-        var output = "";
-        for(var i = 0; i < sm.systems.length; i++) {
-            var system = sm.systems[i];
-            output += "System" + i + "," + system.x + "," + system.y + ", " + system.initializer +"\n";
-        }
-        $(".importExportOutput").text(output);
 
     });
 
-    $(".importExportBtn").button().on("click", function() {
-        $("#importExportDialog").dialog({width:'auto'});;
-    });
+    self.importExportShow = function() {
+        $("#importExportDialog").dialog({width:'auto'});
+    };
 
-    $(".clear").button().on("click", function() {
-       sm.systems = [];
-        sm.redrawSystems();
-    });
-
-    $("#initializer").on("input", function() {
-        if(sm.selectedSystem !== null) {
-            sm.systems[sm.selectedSystem].initializer = $(this).val();
-            sm.updateSystemCordsOut();
-        }
-    });
-
-    $("#defaultInitializer").on("input", function() {
-       sm.defaultInitializer = $(this).val();
-    });
+    self.clearAll = function() {
+        self.systems.removeAll();
+    };
 
 
-};
+}
 
-$(".importExportOutput").focus(function() {
-    var $this = $(this);
-    $this.select();
+var systemMapperModel = new SystemMapperModel();
 
-    // Work around Chrome's little problem
-    $this.mouseup(function() {
-        // Prevent further mouseup intervention
-        $this.unbind("mouseup");
-        return false;
-    });
-});
-
-document.body.onload = init;
+ko.applyBindings(systemMapperModel);

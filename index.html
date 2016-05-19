@@ -3,27 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <title>System Mapper</title>
-    <script src="https://code.jquery.com/jquery-2.2.3.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/EaselJS/0.8.0/easeljs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/store.js/1.3.20/store.min.js"></script>
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/dark-hive/jquery-ui.css">
+    <script src="bower_components/jquery/dist/jquery.js"></script>
+    <script src="bower_components/jquery-ui/jquery-ui.js"></script>
+    <script src="bower_components/EaselJS/lib/easeljs-0.8.2.combined.js"></script>
+    <script src="bower_components/store-js/store.js"></script>
+    <script src="bower_components/knockout/dist/knockout.js"></script>
+    <link rel="stylesheet" href="bower_components/jquery-ui/themes/vader/jquery-ui.css">
+    <link rel="stylesheet" href="bower_components/jquery-ui/themes/vader/theme.css">
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
     <h1>System Mapper</h1>
     <canvas id="demoCanvas" width="500" height="500"></canvas>
     <div class="cordBar">
-        <button class="importExportBtn">Import/Export</button>
-        <button class="clear">Clear</button>
+        <button data-bind="click: importExportShow">Import/Export</button>
+        <button data-bind="click: clearAll" class="clear">Clear</button>
         <br />
-        <label for="defaultInitializer">Default Initializer:</label><input id="defaultInitializer" value="sol_system_initializer" />
-        <div id="currentSystem">
-            <span>#</span>
-            <input type="text" id="initializer" />
-        </div>
-        <label for="cordOut">Coordinate List:</label><br />
-        <ul id="cordOut"></ul>
+        <label for="defaultInitializer">Default Initializer:</label>
+        <br />
+        <input id="defaultInitializer" data-bind="textInput: defaultInitializer" />
+        <table border="1" width="100%">
+            <thead>
+                <tr>
+                    <th width="20"></th>
+                    <th>ID</th>
+                    <th>X</th>
+                    <th>Y</th>
+                    <th>Initalizer</th>
+                </tr>
+            </thead>
+            <tbody data-bind="foreach: systems">
+                <tr data-bind="css: status">
+                    <td width="20"><span data-bind="visible: selected">#</span></td>
+                    <td><span data-bind="text: id"></span></td>
+                    <td><input type="text" data-bind="textInput: x" size="4" /></td>
+                    <td><input type="text" data-bind="textInput: y" size="4" /></td>
+                    <td><input type="text" data-bind="textInput: initializer" /></td>
+                    <td>
+                        <button data-bind="click: $root.removeSystem">X</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
     <div id="importExportDialog" title="Save and Load" style="display:none;">
         <textarea class="importExportOutput"></textarea>
