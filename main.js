@@ -86,9 +86,7 @@ function SystemMapperModel() {
                 var stageObject = self.stage.getChildByName(change.value.id());
                 self.stage.removeChild(stageObject);
                 self.update = true;
-            }else
-            console.log(change.status);
-
+            }
         })
     }, null, "arrayChange");
 
@@ -116,7 +114,32 @@ function SystemMapperModel() {
         self.systems.removeAll();
     };
 
+    self.save = function() {
+        var output = [];
+        self.systems().forEach(function(system) {
+            output.push({
+                x: system.x(),
+                y: system.y(),
+                initializer: system.initializer(),
+                selected: system.selected()
+            });
+        });
+        store.set("systems", output);
+        console.log("saved");
+        window.setTimeout(self.save, 2000);
+    };
 
+    self.load = function() {
+        var input = store.get("systems");
+        if(input !== undefined && input !== "undefined") {
+            input.forEach(function(system) {
+                self.systems.push(new System(system.x, system.y, system.initializer).selected(system.selected));
+            });
+        }
+    };
+
+    self.load();
+    window.setTimeout(self.save, 2000);
 }
 
 var systemMapperModel = new SystemMapperModel();
